@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SATE-UNIAJC | Sistema de Alertas Tempranas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+    <div>
+        <h1>SATE-UNIAJC</h1>
+        <p>Sistema de Alertas Tempranas y Acompañamiento Estudiantil</p>
+    </div>
+    <span class="badge">Ingeniería de Software I</span>
+</header>
+
+<nav>
+    <button class="tab active" data-section="dashboard">Dashboard</button>
+    <button class="tab" data-section="registro">Registro académico</button>
+    <button class="tab" data-section="alertas">Alertas</button>
+    <button class="tab" data-section="tutorias">Acompañamiento</button>
+</nav>
+
+<main>
+<section id="dashboard" class="section active">
+    <div class="section-title">
+        <div>
+            <h2>Dashboard de seguimiento</h2>
+            <p>Visión general de riesgo, cohortes y tutorías.</p>
+        </div>
+        <button onclick="cargarTodo()">Actualizar</button>
+    </div>
+    <div class="cards">
+        <article><span>Estudiantes</span><strong id="totalEstudiantes">0</strong></article>
+        <article class="red-card"><span>Alertas rojas</span><strong id="alertasRojas">0</strong></article>
+        <article class="yellow-card"><span>Alertas amarillas</span><strong id="alertasAmarillas">0</strong></article>
+        <article><span>Proyección de deserción</span><strong id="proyeccion">0%</strong></article>
+        <article><span>Tutorías</span><strong id="totalTutorias">0</strong></article>
+        <article><span>Efectividad tutorías</span><strong id="efectividad">0%</strong></article>
+    </div>
+
+    <div class="grid-two">
+        <div class="panel">
+            <h3>Estudiantes por cohorte</h3>
+            <div id="cohortes"></div>
+        </div>
+        <div class="panel">
+            <h3>Reglas del motor</h3>
+            <ul class="rules">
+                <li><b class="dot red"></b> Roja: inasistencia &gt; 15% o promedio &lt; 3.0</li>
+                <li><b class="dot yellow"></b> Amarilla: promedio entre 3.0 y 3.4</li>
+                <li><b class="dot green"></b> Verde: sin condición de alerta</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section id="registro" class="section">
+    <div class="section-title">
+        <div><h2>Registro académico</h2><p>Consulta estudiantes y actualiza asistencia y notas.</p></div>
+    </div>
+    <div class="panel">
+        <form id="registroForm">
+            <label>Estudiante
+                <select id="estudianteId" required></select>
+            </label>
+            <label>Inasistencia (%)
+                <input id="inasistencia" type="number" min="0" max="100" step="0.1" required>
+            </label>
+            <label>Promedio (0–5)
+                <input id="promedio" type="number" min="0" max="5" step="0.1" required>
+            </label>
+            <button type="submit">Guardar registro y evaluar alerta</button>
+        </form>
+    </div>
+    <div class="panel">
+        <h3>Listado académico</h3>
+        <div class="table-wrap"><table><thead><tr><th>Estudiante</th><th>Cohorte</th><th>Inasistencia</th><th>Promedio</th><th>Estado</th></tr></thead>
+        <tbody id="tablaEstudiantes"></tbody></table></div>
+    </div>
+</section>
+
+<section id="alertas" class="section">
+    <div class="section-title">
+        <div><h2>Motor de alertas</h2><p>Detección automática de estudiantes en riesgo.</p></div>
+        <button onclick="evaluarAlertas()">Evaluar reglas ahora</button>
+    </div>
+    <div class="panel">
+        <div class="table-wrap"><table><thead><tr><th>Estudiante</th><th>Tipo</th><th>Motivo</th><th>Fecha</th><th>Acción</th></tr></thead>
+        <tbody id="tablaAlertas"></tbody></table></div>
+    </div>
+</section>
+
+<section id="tutorias" class="section">
+    <div class="section-title">
+        <div><h2>Portal de acompañamiento</h2><p>Agenda tutorías académicas y citas psicopedagógicas.</p></div>
+    </div>
+    <div class="panel">
+        <form id="tutoriaForm">
+            <label>Estudiante
+                <select id="tutoriaEstudiante" required></select>
+            </label>
+            <label>Docente / profesional
+                <input id="docente" required placeholder="Ej. Ing. Andrea Castro">
+            </label>
+            <label>Tipo
+                <select id="tipo">
+                    <option>Académica</option>
+                    <option>Psicopedagógica</option>
+                </select>
+            </label>
+            <label>Fecha y hora
+                <input id="fecha" type="datetime-local" required>
+            </label>
+            <button type="submit">Agendar tutoría</button>
+        </form>
+    </div>
+    <div class="panel">
+        <h3>Tutorías programadas</h3>
+        <div class="table-wrap"><table><thead><tr><th>Estudiante</th><th>Docente</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody id="tablaTutorias"></tbody></table></div>
+    </div>
+</section>
+</main>
+
+<footer>SATE-UNIAJC · Proyecto académico · Corte 1 a Corte 3</footer>
+<script src="app.js"></script>
+</body>
+</html>
