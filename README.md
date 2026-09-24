@@ -10,7 +10,7 @@
 |---|---|---|
 | Darwin Alexander Valencia Flor | @darwinvf2765 | Product Owner (PO) |
 | Juan David Rosero Guerrero | @JuanRGuerrero | Scrum Master (SM) |
-| Jeremy Andrey Agreda Rosero | @jere1927 | Developer 1 |
+| Jeremy Andrey Agreda | @jere1927 | Developer 1 |
 
 ---
 ## Logo
