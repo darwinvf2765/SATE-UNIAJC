@@ -68,3 +68,19 @@ El proyecto utiliza **Git y GitHub** para el control de versiones y el trabajo c
 **Asignatura:** Ingeniería de Software I
 
 **Sprint actual:** Sprint 1
+---
+
+## Ejecución del proyecto
+
+### Requisitos
+
+- Java 25 o superior
+- Maven 3.9 o superior
+- MySQL, si se utiliza la configuración de base de datos correspondiente
+
+### Ejecutar las pruebas
+
+Para verificar que el proyecto compila y que las pruebas automatizadas funcionan:
+
+```bash
+mvn clean test
