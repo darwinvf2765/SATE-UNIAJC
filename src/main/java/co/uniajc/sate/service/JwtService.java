@@ -1,6 +1,7 @@
 package co.uniajc.sate.service;
 
 import co.uniajc.sate.model.Usuario;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
@@ -40,5 +41,26 @@ public class JwtService {
                 .expiration(expiracion)
                 .signWith(key)
                 .compact();
+    }
+
+    public String extraerEmail(String token) {
+
+        return obtenerClaims(token)
+                .getSubject();
+    }
+
+    public String extraerRol(String token) {
+
+        return obtenerClaims(token)
+                .get("rol", String.class);
+    }
+
+    private Claims obtenerClaims(String token) {
+
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
