@@ -1,3 +1,4 @@
+
 package co.uniajc.sate.controller;
 
 import co.uniajc.sate.model.Estudiante;
@@ -13,10 +14,13 @@ import java.util.List;
 @RequestMapping("/api/estudiantes")
 @CrossOrigin
 public class EstudianteController {
+
     private final EstudianteRepository repository;
     private final AlertaService alertaService;
 
-    public EstudianteController(EstudianteRepository repository, AlertaService alertaService) {
+    public EstudianteController(
+            EstudianteRepository repository,
+            AlertaService alertaService) {
         this.repository = repository;
         this.alertaService = alertaService;
     }
@@ -29,7 +33,8 @@ public class EstudianteController {
     @GetMapping("/{id}")
     public Estudiante buscar(@PathVariable Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado"));
+                .orElseThrow(() ->
+                        new RuntimeException("Estudiante no encontrado"));
     }
 
     @PostMapping
@@ -41,14 +46,31 @@ public class EstudianteController {
     }
 
     @PutMapping("/{id}/registro")
-    public Estudiante actualizarRegistro(@PathVariable Long id, @RequestBody RegistroRequest request) {
-        Estudiante e = buscar(id);
-        e.setPorcentajeInasistencia(request.porcentajeInasistencia());
-        e.setPromedio(request.promedio());
-        Estudiante guardado = repository.save(e);
+    public Estudiante actualizarRegistro(
+            @PathVariable Long id,
+            @Valid @RequestBody RegistroRequest request) {
+
+        Estudiante estudiante = buscar(id);
+
+        estudiante.setPorcentajeInasistencia(
+                request.porcentajeInasistencia());
+
+        estudiante.setPromedio(request.promedio());
+
+        Estudiante guardado = repository.save(estudiante);
+
         alertaService.evaluarEstudiante(guardado);
+
         return repository.save(guardado);
     }
 
-    public record RegistroRequest(double porcentajeInasistencia, double promedio) {}
+    public record RegistroRequest(
+            @jakarta.validation.constraints.DecimalMin("0.0")
+            @jakarta.validation.constraints.DecimalMax("100.0")
+            double porcentajeInasistencia,
+
+            @jakarta.validation.constraints.DecimalMin("0.0")
+            @jakarta.validation.constraints.DecimalMax("5.0")
+            double promedio
+    ) {}
 }

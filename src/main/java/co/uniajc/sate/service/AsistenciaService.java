@@ -2,6 +2,7 @@ package co.uniajc.sate.service;
 
 import co.uniajc.sate.model.Asistencia;
 import co.uniajc.sate.model.Estudiante;
+import co.uniajc.sate.model.Materia;
 import co.uniajc.sate.repository.AsistenciaRepository;
 import co.uniajc.sate.repository.EstudianteRepository;
 import org.springframework.stereotype.Service;
@@ -25,14 +26,14 @@ public class AsistenciaService {
         this.alertaService = alertaService;
     }
 
-    /**
-     * Registra una asistencia y actualiza el porcentaje
-     * de inasistencia del estudiante.
-     */
     public Asistencia registrar(Asistencia asistencia) {
 
         if (asistencia.getEstudiante() == null) {
             throw new IllegalArgumentException("El estudiante es obligatorio");
+        }
+
+        if (asistencia.getMateria() == null) {
+            throw new IllegalArgumentException("La materia es obligatoria");
         }
 
         if (asistencia.getFecha() == null) {
@@ -46,9 +47,6 @@ public class AsistenciaService {
         return guardada;
     }
 
-    /**
-     * Calcula el porcentaje de inasistencia de un estudiante.
-     */
     public double calcularPorcentajeInasistencia(Estudiante estudiante) {
 
         List<Asistencia> asistencias =
@@ -66,16 +64,38 @@ public class AsistenciaService {
     }
 
     /**
-     * Obtiene todas las asistencias de un estudiante.
+     * Calcula la inasistencia de un estudiante en una materia específica.
      */
-    public List<Asistencia> getAsistenciasPorEstudiante(Estudiante estudiante) {
+    public double calcularPorcentajeInasistencia(
+            Estudiante estudiante,
+            Materia materia) {
+
+        if (estudiante == null || materia == null) {
+            throw new IllegalArgumentException(
+                    "El estudiante y la materia son obligatorios");
+        }
+
+        List<Asistencia> asistencias =
+                asistenciaRepository.findByEstudianteAndMateria(
+                        estudiante, materia);
+
+        if (asistencias.isEmpty()) {
+            return 0.0;
+        }
+
+        long ausencias = asistencias.stream()
+                .filter(asistencia -> !asistencia.isPresente())
+                .count();
+
+        return (ausencias * 100.0) / asistencias.size();
+    }
+
+    public List<Asistencia> getAsistenciasPorEstudiante(
+            Estudiante estudiante) {
+
         return asistenciaRepository.findByEstudiante(estudiante);
     }
 
-    /**
-     * Actualiza el porcentaje de inasistencia y
-     * evalúa nuevamente las condiciones de alerta.
-     */
     private void actualizarPorcentajeInasistencia(Estudiante estudiante) {
 
         double porcentaje = calcularPorcentajeInasistencia(estudiante);

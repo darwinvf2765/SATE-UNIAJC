@@ -1,3 +1,4 @@
+
 package co.uniajc.sate.service;
 
 import co.uniajc.sate.model.Alerta;
@@ -12,10 +13,13 @@ import java.util.List;
 
 @Service
 public class AlertaService {
+
     private final EstudianteRepository estudianteRepository;
     private final AlertaRepository alertaRepository;
 
-    public AlertaService(EstudianteRepository estudianteRepository, AlertaRepository alertaRepository) {
+    public AlertaService(
+            EstudianteRepository estudianteRepository,
+            AlertaRepository alertaRepository) {
         this.estudianteRepository = estudianteRepository;
         this.alertaRepository = alertaRepository;
     }
@@ -24,14 +28,12 @@ public class AlertaService {
         String estado;
         String motivo;
 
-        if (e.getPorcentajeInasistencia() > 15 || e.getPromedio() < 3.0) {
+        if (e.getPorcentajeInasistencia() > 15) {
             estado = "ROJA";
-            motivo = e.getPorcentajeInasistencia() > 15
-                    ? "Inasistencia superior al 15%"
-                    : "Promedio inferior a 3.0";
-        } else if (e.getPromedio() >= 3.0 && e.getPromedio() <= 3.4) {
+            motivo = "Inasistencia superior al 15%";
+        } else if (e.getPromedio() < 3.0) {
             estado = "AMARILLA";
-            motivo = "Promedio entre 3.0 y 3.4";
+            motivo = "Promedio inferior a 3.0";
         } else {
             estado = "VERDE";
             motivo = "Sin condición de alerta";
@@ -41,18 +43,36 @@ public class AlertaService {
         estudianteRepository.save(e);
 
         if (!"VERDE".equals(estado)) {
-            alertaRepository.save(new Alerta(
-                    e.getId(), e.getNombre(), estado, motivo, LocalDateTime.now(), false
-            ));
+            List<Alerta> existentes =
+                    alertaRepository.findByEstudianteId(e.getId());
+
+            boolean yaExiste = existentes.stream()
+                    .anyMatch(a -> estado.equals(a.getTipo())
+                            && motivo.equals(a.getMotivo())
+                            && !a.isAtendida());
+
+            if (!yaExiste) {
+                alertaRepository.save(new Alerta(
+                        e.getId(),
+                        e.getNombre(),
+                        estado,
+                        motivo,
+                        LocalDateTime.now(),
+                        false
+                ));
+            }
         }
+
         return estado;
     }
 
     public List<Alerta> evaluarTodos() {
         List<Alerta> nuevas = new ArrayList<>();
+
         for (Estudiante e : estudianteRepository.findAll()) {
             evaluarEstudiante(e);
         }
+
         nuevas.addAll(alertaRepository.findAll());
         return nuevas;
     }

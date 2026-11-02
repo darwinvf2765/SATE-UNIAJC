@@ -1,3 +1,4 @@
+
 package co.uniajc.sate;
 
 import co.uniajc.sate.model.Alerta;
@@ -16,9 +17,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,81 +46,18 @@ class SateUniajcApplicationTests {
 
     @Test
     void debeCalcularPorcentajeDeInasistencia() {
-
-        Estudiante estudiante = new Estudiante(
-                "123456789",
-                "Juan Prueba",
-                "Ingenieria de Software",
-                "2026-1",
-                0.0,
-                4.2,
-                null
-        );
-
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
         Materia materia = new Materia("Ingenieria de Software");
 
-        List<Asistencia> asistencias = List.of(
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 1, 10),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 1, 17),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 1, 24),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 1, 31),
-                        false
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 2, 7),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 2, 14),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 2, 21),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 2, 28),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 3, 7),
-                        true
-                ),
-                new Asistencia(
-                        estudiante,
-                        materia,
-                        LocalDate.of(2026, 3, 14),
-                        false
-                )
-        );
+        List<Asistencia> asistencias = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            asistencias.add(new Asistencia(
+                    estudiante, materia,
+                    LocalDate.of(2026, 1, 1).plusDays(i),
+                    i != 3 && i != 9
+            ));
+        }
 
         when(asistenciaRepository.findByEstudiante(estudiante))
                 .thenReturn(asistencias);
@@ -125,44 +66,25 @@ class SateUniajcApplicationTests {
                 asistenciaService.calcularPorcentajeInasistencia(estudiante);
 
         assertEquals(20.0, porcentaje);
-
         verify(asistenciaRepository).findByEstudiante(estudiante);
     }
 
     @Test
     void debeRegistrarAsistenciaYActualizarPorcentaje() {
-
-        Estudiante estudiante = new Estudiante(
-                "987654321",
-                "Estudiante Prueba",
-                "Ingenieria de Software",
-                "2026-1",
-                0.0,
-                4.2,
-                null
-        );
-
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
         Materia materia = new Materia("Ingenieria de Software");
 
         Asistencia asistencia = new Asistencia(
-                estudiante,
-                materia,
-                LocalDate.of(2026, 3, 20),
-                false
+                estudiante, materia, LocalDate.of(2026, 3, 20), false
         );
 
-        List<Asistencia> asistencias = List.of(asistencia);
-
-        when(asistenciaRepository.save(asistencia))
-                .thenReturn(asistencia);
-
+        when(asistenciaRepository.save(asistencia)).thenReturn(asistencia);
         when(asistenciaRepository.findByEstudiante(estudiante))
-                .thenReturn(asistencias);
+                .thenReturn(List.of(asistencia));
 
         asistenciaService.registrar(asistencia);
 
         assertEquals(100.0, estudiante.getPorcentajeInasistencia());
-
         verify(asistenciaRepository).save(asistencia);
         verify(estudianteRepository).save(estudiante);
         verify(alertaService).evaluarEstudiante(estudiante);
@@ -170,28 +92,136 @@ class SateUniajcApplicationTests {
 
     @Test
     void debeGenerarAlertaRojaCuandoInasistenciaSupera15Porciento() {
+        Estudiante estudiante = crearEstudiante(16.0, 4.2);
 
-        Estudiante estudiante = new Estudiante(
-                "123456789",
-                "Juan Prueba",
-                "Ingenieria de Software",
-                "2026-1",
-                16.0,
-                4.2,
-                null
-        );
-
-        String resultado = new AlertaService(
-                estudianteRepository,
-                alertaRepository
-        ).evaluarEstudiante(estudiante);
+        String resultado = crearAlertaService().evaluarEstudiante(estudiante);
 
         assertEquals("ROJA", resultado);
         assertEquals("ROJA", estudiante.getEstadoAlerta());
 
         verify(estudianteRepository).save(estudiante);
-        verify(alertaRepository).save(
-                org.mockito.ArgumentMatchers.any(Alerta.class)
+        verify(alertaRepository).save(any(Alerta.class));
+    }
+
+    @Test
+    void debeCalcularInasistenciaPorMateria() {
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
+        Materia materia = new Materia("Matematicas");
+
+        List<Asistencia> asistencias = List.of(
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 10), true),
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 17), false),
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 24), true),
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 31), true)
         );
+
+        when(asistenciaRepository.findByEstudianteAndMateria(estudiante, materia))
+                .thenReturn(asistencias);
+
+        double porcentaje = asistenciaService.calcularPorcentajeInasistencia(
+                estudiante, materia
+        );
+
+        assertEquals(25.0, porcentaje);
+    }
+
+    @Test
+    void debeRetornarCeroCuandoNoHayAsistenciasPorMateria() {
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
+        Materia materia = new Materia("Matematicas");
+
+        when(asistenciaRepository.findByEstudianteAndMateria(estudiante, materia))
+                .thenReturn(List.of());
+
+        double porcentaje = asistenciaService.calcularPorcentajeInasistencia(
+                estudiante, materia
+        );
+
+        assertEquals(0.0, porcentaje);
+    }
+
+    @Test
+    void debeCalcularCorrectamenteElQuincePorCiento() {
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
+        Materia materia = new Materia("Matematicas");
+
+        List<Asistencia> asistencias = new ArrayList<>();
+
+        for (int i = 0; i < 20; i++) {
+            asistencias.add(new Asistencia(
+                    estudiante,
+                    materia,
+                    LocalDate.of(2026, 1, 1).plusDays(i),
+                    i >= 3
+            ));
+        }
+
+        when(asistenciaRepository.findByEstudianteAndMateria(estudiante, materia))
+                .thenReturn(asistencias);
+
+        double porcentaje = asistenciaService.calcularPorcentajeInasistencia(
+                estudiante, materia
+        );
+
+        assertEquals(15.0, porcentaje);
+    }
+
+    @Test
+    void debeRechazarEstudianteNuloAlCalcularPorMateria() {
+        Materia materia = new Materia("Matematicas");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> asistenciaService.calcularPorcentajeInasistencia(null, materia)
+        );
+    }
+
+    @Test
+    void elQuincePorCientoExactoNoDebeGenerarAlertaRoja() {
+        Estudiante estudiante = crearEstudiante(15.0, 4.2);
+
+        String resultado = crearAlertaService().evaluarEstudiante(estudiante);
+
+        assertEquals("VERDE", resultado);
+        verify(alertaRepository, org.mockito.Mockito.never())
+                .save(any(Alerta.class));
+    }
+
+    @Test
+    void promedioExactamenteTresNoDebeGenerarAlertaAmarilla() {
+        Estudiante estudiante = crearEstudiante(0.0, 3.0);
+
+        String resultado = crearAlertaService().evaluarEstudiante(estudiante);
+
+        assertEquals("VERDE", resultado);
+        verify(alertaRepository, org.mockito.Mockito.never())
+                .save(any(Alerta.class));
+    }
+
+    @Test
+    void promedioInferiorATresDebeGenerarAlertaAmarilla() {
+        Estudiante estudiante = crearEstudiante(0.0, 2.9);
+
+        String resultado = crearAlertaService().evaluarEstudiante(estudiante);
+
+        assertEquals("AMARILLA", resultado);
+        assertEquals("AMARILLA", estudiante.getEstadoAlerta());
+        verify(alertaRepository).save(any(Alerta.class));
+    }
+
+    private Estudiante crearEstudiante(double inasistencia, double promedio) {
+        return new Estudiante(
+                "123456789",
+                "Juan Prueba",
+                "Ingenieria de Software",
+                "2026-1",
+                inasistencia,
+                promedio,
+                null
+        );
+    }
+
+    private AlertaService crearAlertaService() {
+        return new AlertaService(estudianteRepository, alertaRepository);
     }
 }

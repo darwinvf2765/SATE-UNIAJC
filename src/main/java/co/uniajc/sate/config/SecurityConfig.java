@@ -1,3 +1,4 @@
+
 package co.uniajc.sate.config;
 
 import org.springframework.context.annotation.Bean;
@@ -32,21 +33,26 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Autenticación pública
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico"
+                        ).permitAll()
+
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Funcionalidades de docente
                         .requestMatchers("/api/asistencias/**")
                         .hasRole("DOCENTE")
 
-                        // Funcionalidades de director
                         .requestMatchers("/api/alertas/**")
                         .hasRole("DIRECTOR")
 
                         .requestMatchers("/api/dashboard/**")
                         .hasRole("DIRECTOR")
 
-                        // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
                 )
 
