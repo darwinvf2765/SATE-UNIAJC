@@ -1,53 +1,90 @@
+
 const api = '/api';
-let token = null;
 
-const loginPanel = document.getElementById('loginPanel');
-const appContainer = document.getElementById('appContainer');
 const loginForm = document.getElementById('loginForm');
-const loginError = document.getElementById('loginError');
-const logoutButton = document.getElementById('logoutButton');
+const loginScreen = document.getElementById('loginScreen');
 
-// Navegación entre secciones
-document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+function mostrarAplicacion(visible) {
+    document.body.classList.toggle('authenticated', visible);
 
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.section).classList.add('active');
-    });
-});
-
-// Peticiones HTTP con JWT
-async function getJson(url, options = {}) {
-    const headers = {
-        ...(options.headers || {}),
-        'Authorization': `Bearer ${token}`
-    };
-
-    const response = await fetch(url, {
-        ...options,
-        headers
+    Array.from(document.body.children).forEach(elemento => {
+        if (elemento.id !== 'loginScreen' && elemento.tagName !== 'SCRIPT') {
+            elemento.hidden = !visible;
+        }
     });
 
-    if (response.status === 401 || response.status === 403) {
-        cerrarSesion();
-        throw new Error('Sesión expirada o sin permisos para esta operación.');
-    }
-
-    if (!response.ok) {
-        throw new Error(await response.text());
-    }
-
-    if (response.status === 204) return null;
-
-    return response.json();
+    loginScreen.style.display = visible ? 'none' : 'flex';
 }
 
-// Inicio de sesión
-loginForm.addEventListener('submit', async e => {
+function cerrarSesion() {
+    localStorage.removeItem('sateToken');
+    localStorage.removeItem('sateEmail');
+    localStorage.removeItem('sateRol');
+
+    mostrarAplicacion(false);
+}
+
+function obtenerRol() {
+    return (localStorage.getItem('sateRol') || '')
+        .toUpperCase()
+        .replace(/^ROLE_/, '');
+}
+
+function configurarPermisos() {
+    const esDirector = obtenerRol() === 'DIRECTOR';
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        const seccion = (tab.dataset.section || '').toLowerCase();
+
+        if (seccion.includes('dashboard') || seccion.includes('alerta')) {
+            tab.hidden = !esDirector;
+        } else {
+            tab.hidden = false;
+        }
+    });
+
+    document.querySelectorAll('.section').forEach(seccion => {
+        const id = seccion.id.toLowerCase();
+
+        if (id.includes('dashboard') || id.includes('alerta')) {
+            seccion.hidden = !esDirector;
+        } else {
+            seccion.hidden = false;
+        }
+    });
+
+    const primeraTab = Array.from(document.querySelectorAll('.tab'))
+        .find(tab => !tab.hidden);
+
+    if (primeraTab) {
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        document.querySelectorAll('.section').forEach(seccion => {
+            seccion.classList.remove('active');
+        });
+
+        primeraTab.classList.add('active');
+
+        const seccionInicial = document.getElementById(
+            primeraTab.dataset.section
+        );
+
+        if (seccionInicial) {
+            seccionInicial.classList.add('active');
+        }
+    }
+}
+
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    loginError.textContent = '';
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const error = document.getElementById('loginError');
+
+    error.textContent = '';
 
     try {
         const response = await fetch(api + '/auth/login', {
@@ -55,10 +92,7 @@ loginForm.addEventListener('submit', async e => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            })
+            body: JSON.stringify({ email, password })
         });
 
         if (!response.ok) {
@@ -67,49 +101,110 @@ loginForm.addEventListener('submit', async e => {
 
         const data = await response.json();
 
-        token = data.token;
-        loginPanel.style.display = 'none';
-        appContainer.style.display = 'block';
+        if (!data.token) {
+            throw new Error('El servidor no entregó un token de autenticación.');
+        }
+
+        localStorage.setItem('sateToken', data.token);
+        localStorage.setItem('sateEmail', data.email);
+        localStorage.setItem('sateRol', data.rol);
+
+        mostrarAplicacion(true);
+        configurarPermisos();
 
         loginForm.reset();
         await cargarTodo();
 
-    } catch (error) {
-        loginError.textContent = error.message;
-        console.error(error);
+    } catch (err) {
+        error.textContent = err.message;
+        console.error(err);
     }
 });
 
-// Cerrar sesión
-function cerrarSesion() {
-    token = null;
-    appContainer.style.display = 'none';
-    loginPanel.style.display = 'block';
+document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (btn.hidden) return;
+
+        document.querySelectorAll('.tab').forEach(b => {
+            b.classList.remove('active');
+        });
+
+        document.querySelectorAll('.section').forEach(s => {
+            s.classList.remove('active');
+        });
+
+        btn.classList.add('active');
+
+        const seccion = document.getElementById(btn.dataset.section);
+
+        if (seccion) {
+            seccion.classList.add('active');
+        }
+    });
+});
+
+async function getJson(url, options = {}) {
+    const token = localStorage.getItem('sateToken');
+
+    const headers = {
+        ...(options.headers || {})
+    };
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    if (response.status === 401) {
+        cerrarSesion();
+        throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
+    }
+
+    if (response.status === 403) {
+        throw new Error('No tienes permisos para realizar esta acción.');
+    }
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    return response.json();
 }
 
-logoutButton.addEventListener('click', cerrarSesion);
-
-// Cargar información
 async function cargarTodo() {
     try {
-        const [dashboard, estudiantes, alertas, tutorias] = await Promise.all([
-            getJson(api + '/dashboard'),
+        const [estudiantes, tutorias] = await Promise.all([
             getJson(api + '/estudiantes'),
-            getJson(api + '/alertas'),
             getJson(api + '/tutorias')
         ]);
 
-        pintarDashboard(dashboard);
         pintarEstudiantes(estudiantes);
-        pintarAlertas(alertas);
         pintarTutorias(tutorias);
         llenarSelects(estudiantes);
 
-    } catch (e) {
-        console.error(e);
+        if (obtenerRol() === 'DIRECTOR') {
+            const [dashboard, alertas] = await Promise.all([
+                getJson(api + '/dashboard'),
+                getJson(api + '/alertas')
+            ]);
 
-        if (token) {
-            alert('No se pudo cargar toda la información. Verifique sus permisos y los servicios del sistema.');
+            pintarDashboard(dashboard);
+            pintarAlertas(alertas);
+        }
+
+    } catch (e) {
+        console.error('Error al cargar información:', e);
+
+        if (localStorage.getItem('sateToken')) {
+            alert(e.message || 'No se pudo cargar la información.');
         }
     }
 }
@@ -177,7 +272,7 @@ function pintarTutorias(lista) {
             <td>
                 ${t.estado !== 'REALIZADA'
                     ? `<button class="action" onclick="cambiarEstado(${t.id}, 'REALIZADA')">Realizada</button>`
-                    : '✓'
+                    : '✔'
                 }
             </td>
         </tr>
@@ -193,7 +288,6 @@ function formatearFecha(f) {
     });
 }
 
-// Registro académico
 registroForm.addEventListener('submit', async e => {
     e.preventDefault();
 
@@ -213,12 +307,11 @@ registroForm.addEventListener('submit', async e => {
         await cargarTodo();
 
     } catch (err) {
-        alert('Error al guardar el registro.');
+        alert('Error al guardar el registro: ' + err.message);
         console.error(err);
     }
 });
 
-// Agendar tutoría
 tutoriaForm.addEventListener('submit', async e => {
     e.preventDefault();
 
@@ -239,15 +332,15 @@ tutoriaForm.addEventListener('submit', async e => {
 
         alert('Tutoría agendada correctamente.');
         tutoriaForm.reset();
+
         await cargarTodo();
 
     } catch (err) {
-        alert('Error al agendar la tutoría.');
+        alert('Error al agendar la tutoría: ' + err.message);
         console.error(err);
     }
 });
 
-// Atender alerta
 async function atenderAlerta(id) {
     try {
         await getJson(`${api}/alertas/${id}/atendida`, {
@@ -257,12 +350,11 @@ async function atenderAlerta(id) {
         await cargarTodo();
 
     } catch (err) {
+        alert(err.message);
         console.error(err);
-        alert('No se pudo actualizar la alerta.');
     }
 }
 
-// Evaluar alertas
 async function evaluarAlertas() {
     try {
         await getJson(api + '/alertas/evaluar', {
@@ -273,12 +365,11 @@ async function evaluarAlertas() {
         await cargarTodo();
 
     } catch (err) {
+        alert(err.message);
         console.error(err);
-        alert('No se pudieron evaluar las alertas.');
     }
 }
 
-// Cambiar estado de tutoría
 async function cambiarEstado(id, estado) {
     try {
         await getJson(`${api}/tutorias/${id}/estado`, {
@@ -292,7 +383,9 @@ async function cambiarEstado(id, estado) {
         await cargarTodo();
 
     } catch (err) {
+        alert(err.message);
         console.error(err);
-        alert('No se pudo cambiar el estado de la tutoría.');
     }
 }
+
+mostrarAplicacion(false);

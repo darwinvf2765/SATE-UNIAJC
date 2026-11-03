@@ -20,12 +20,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,33 +53,26 @@ class SateUniajcApplicationTests {
     @InjectMocks
     private AsistenciaService asistenciaService;
 
+    // ============================
+    // PRUEBAS HU-04 Y HU-05
+    // ============================
+
     @Test
     void debeCalcularPorcentajeDeInasistencia() {
 
-        Estudiante estudiante = new Estudiante(
-                "123456789",
-                "Juan Prueba",
-                "Ingenieria de Software",
-                "2026-1",
-                0.0,
-                4.2,
-                null
-        );
-
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
         Materia materia = new Materia("Ingenieria de Software");
 
-        List<Asistencia> asistencias = List.of(
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 10), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 17), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 24), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 31), false),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 2, 7), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 2, 14), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 2, 21), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 2, 28), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 3, 7), true),
-                new Asistencia(estudiante, materia, LocalDate.of(2026, 3, 14), false)
-        );
+        List<Asistencia> asistencias = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            asistencias.add(new Asistencia(
+                    estudiante,
+                    materia,
+                    LocalDate.of(2026, 1, 1).plusDays(i),
+                    i != 3 && i != 9
+            ));
+        }
 
         when(asistenciaRepository.findByEstudiante(estudiante))
                 .thenReturn(asistencias);
@@ -106,16 +102,7 @@ class SateUniajcApplicationTests {
     @Test
     void debeRegistrarAsistenciaYActualizarPorcentaje() {
 
-        Estudiante estudiante = new Estudiante(
-                "987654321",
-                "Estudiante Prueba",
-                "Ingenieria de Software",
-                "2026-1",
-                0.0,
-                4.2,
-                null
-        );
-
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
         Materia materia = new Materia("Ingenieria de Software");
 
         Asistencia asistencia = new Asistencia(
@@ -136,6 +123,87 @@ class SateUniajcApplicationTests {
         verify(estudianteRepository).save(estudiante);
         verify(alertaService).evaluarEstudiante(estudiante);
     }
+
+    @Test
+    void debeCalcularInasistenciaPorMateria() {
+
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
+        Materia materia = new Materia("Matematicas");
+
+        List<Asistencia> asistencias = List.of(
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 10), true),
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 17), false),
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 24), true),
+                new Asistencia(estudiante, materia, LocalDate.of(2026, 1, 31), true)
+        );
+
+        when(asistenciaRepository.findByEstudianteAndMateria(estudiante, materia))
+                .thenReturn(asistencias);
+
+        double porcentaje = asistenciaService.calcularPorcentajeInasistencia(
+                estudiante, materia
+        );
+
+        assertEquals(25.0, porcentaje);
+    }
+
+    @Test
+    void debeRetornarCeroCuandoNoHayAsistenciasPorMateria() {
+
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
+        Materia materia = new Materia("Matematicas");
+
+        when(asistenciaRepository.findByEstudianteAndMateria(estudiante, materia))
+                .thenReturn(List.of());
+
+        double porcentaje = asistenciaService.calcularPorcentajeInasistencia(
+                estudiante, materia
+        );
+
+        assertEquals(0.0, porcentaje);
+    }
+
+    @Test
+    void debeCalcularCorrectamenteElQuincePorCiento() {
+
+        Estudiante estudiante = crearEstudiante(0.0, 4.2);
+        Materia materia = new Materia("Matematicas");
+
+        List<Asistencia> asistencias = new ArrayList<>();
+
+        for (int i = 0; i < 20; i++) {
+            asistencias.add(new Asistencia(
+                    estudiante,
+                    materia,
+                    LocalDate.of(2026, 1, 1).plusDays(i),
+                    i >= 3
+            ));
+        }
+
+        when(asistenciaRepository.findByEstudianteAndMateria(estudiante, materia))
+                .thenReturn(asistencias);
+
+        double porcentaje = asistenciaService.calcularPorcentajeInasistencia(
+                estudiante, materia
+        );
+
+        assertEquals(15.0, porcentaje);
+    }
+
+    @Test
+    void debeRechazarEstudianteNuloAlCalcularPorMateria() {
+
+        Materia materia = new Materia("Matematicas");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> asistenciaService.calcularPorcentajeInasistencia(null, materia)
+        );
+    }
+
+    // ============================
+    // PRUEBAS HU-06: ALERTA ROJA
+    // ============================
 
     @Test
     void debeGenerarAlertaRojaCuandoInasistenciaSupera15Porciento() {
@@ -160,47 +228,6 @@ class SateUniajcApplicationTests {
     }
 
     @Test
-    void debeGenerarAlertaAmarillaCuandoPromedioEsInferiorA3() {
-
-        Estudiante estudiante = crearEstudiante(10.0, 2.8);
-
-        AlertaService servicio = crearAlertaService(
-                new EvaluadorPromedio()
-        );
-
-        String resultado = servicio.evaluarEstudiante(estudiante);
-
-        assertEquals("AMARILLA", resultado);
-        assertEquals("AMARILLA", estudiante.getEstadoAlerta());
-
-        verify(notificacionService).notificar(
-                any(Estudiante.class),
-                any(EvaluadorAlerta.ResultadoEvaluacion.class)
-        );
-    }
-
-    @Test
-    void debeGenerarDosAlertasCuandoCumpleAmbasCondiciones() {
-
-        Estudiante estudiante = crearEstudiante(20.0, 2.5);
-
-        AlertaService servicio = crearAlertaService(
-                new EvaluadorInasistencia(),
-                new EvaluadorPromedio()
-        );
-
-        String resultado = servicio.evaluarEstudiante(estudiante);
-
-        assertEquals("ROJA", resultado);
-
-        verify(notificacionService, org.mockito.Mockito.times(2))
-                .notificar(
-                        any(Estudiante.class),
-                        any(EvaluadorAlerta.ResultadoEvaluacion.class)
-                );
-    }
-
-    @Test
     void noDebeGenerarAlertaRojaConInasistenciaExactamente15() {
 
         Estudiante estudiante = crearEstudiante(15.0, 4.2);
@@ -212,20 +239,11 @@ class SateUniajcApplicationTests {
         String resultado = servicio.evaluarEstudiante(estudiante);
 
         assertEquals("VERDE", resultado);
-    }
 
-    @Test
-    void noDebeGenerarAlertaAmarillaConPromedioExactamente3() {
-
-        Estudiante estudiante = crearEstudiante(10.0, 3.0);
-
-        AlertaService servicio = crearAlertaService(
-                new EvaluadorPromedio()
+        verify(notificacionService, never()).notificar(
+                any(Estudiante.class),
+                any(EvaluadorAlerta.ResultadoEvaluacion.class)
         );
-
-        String resultado = servicio.evaluarEstudiante(estudiante);
-
-        assertEquals("VERDE", resultado);
     }
 
     @Test
@@ -256,6 +274,49 @@ class SateUniajcApplicationTests {
         );
     }
 
+    // ============================
+    // PRUEBAS HU-07: ALERTA AMARILLA
+    // ============================
+
+    @Test
+    void debeGenerarAlertaAmarillaCuandoPromedioEsInferiorA3() {
+
+        Estudiante estudiante = crearEstudiante(10.0, 2.8);
+
+        AlertaService servicio = crearAlertaService(
+                new EvaluadorPromedio()
+        );
+
+        String resultado = servicio.evaluarEstudiante(estudiante);
+
+        assertEquals("AMARILLA", resultado);
+        assertEquals("AMARILLA", estudiante.getEstadoAlerta());
+
+        verify(notificacionService).notificar(
+                any(Estudiante.class),
+                any(EvaluadorAlerta.ResultadoEvaluacion.class)
+        );
+    }
+
+    @Test
+    void noDebeGenerarAlertaAmarillaConPromedioExactamente3() {
+
+        Estudiante estudiante = crearEstudiante(10.0, 3.0);
+
+        AlertaService servicio = crearAlertaService(
+                new EvaluadorPromedio()
+        );
+
+        String resultado = servicio.evaluarEstudiante(estudiante);
+
+        assertEquals("VERDE", resultado);
+
+        verify(notificacionService, never()).notificar(
+                any(Estudiante.class),
+                any(EvaluadorAlerta.ResultadoEvaluacion.class)
+        );
+    }
+
     @Test
     void debeRechazarPromedioNegativo() {
 
@@ -281,6 +342,35 @@ class SateUniajcApplicationTests {
                 () -> evaluador.evaluar(estudiante)
         );
     }
+
+    // ============================
+    // PRUEBA DE AMBAS ALERTAS
+    // ============================
+
+    @Test
+    void debeGenerarDosAlertasCuandoCumpleAmbasCondiciones() {
+
+        Estudiante estudiante = crearEstudiante(20.0, 2.5);
+
+        AlertaService servicio = crearAlertaService(
+                new EvaluadorInasistencia(),
+                new EvaluadorPromedio()
+        );
+
+        String resultado = servicio.evaluarEstudiante(estudiante);
+
+        assertEquals("ROJA", resultado);
+        assertEquals("ROJA", estudiante.getEstadoAlerta());
+
+        verify(notificacionService, times(2)).notificar(
+                any(Estudiante.class),
+                any(EvaluadorAlerta.ResultadoEvaluacion.class)
+        );
+    }
+
+    // ============================
+    // MÉTODOS AUXILIARES
+    // ============================
 
     private Estudiante crearEstudiante(
             double inasistencia,

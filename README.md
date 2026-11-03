@@ -84,3 +84,16 @@ Para verificar que el proyecto compila y que las pruebas automatizadas funcionan
 
 ```bash
 mvn clean test
+
+## Documentación del proyecto
+
+La documentación de SATE-UNIAJC se encuentra en la carpeta
+[docs](./docs/), e incluye:
+
+- Acta de constitución
+- Documentación técnica
+- Product Backlog
+- Tablero Kanban
+- Plan de pruebas
+- Retrospectiva del sprint
+- Guía de documentos

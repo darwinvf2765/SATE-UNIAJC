@@ -1,4 +1,3 @@
-
 package co.uniajc.sate.config;
 
 import org.springframework.context.annotation.Bean;
@@ -39,6 +38,9 @@ public class SecurityConfig {
                                 "/index.html",
                                 "/app.js",
                                 "/styles.css",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
                                 "/favicon.ico"
                         ).permitAll()
 
