@@ -1,3 +1,4 @@
+
 package co.uniajc.sate.config;
 
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,15 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Archivos públicos del frontend
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/app.js",
+                                "/styles.css",
+                                "/favicon.ico"
+                        ).permitAll()
 
                         // Autenticación pública
                         .requestMatchers("/api/auth/**").permitAll()
