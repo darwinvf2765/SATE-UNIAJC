@@ -1,0 +1,59 @@
+
+name: CD - Entrega Continua SATE-UNIAJC
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  entrega:
+    name: Probar y empaquetar aplicacion
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Verificar versiones
+        run: |
+          java -version
+          mvn -version
+
+      - name: Ejecutar pruebas automatizadas
+        run: mvn --batch-mode clean test
+
+      - name: Empaquetar aplicacion Spring Boot
+        run: mvn --batch-mode package -DskipTests
+
+      - name: Verificar archivo JAR
+        shell: bash
+        run: |
+          test -f target/sate-uniajc-1.0.0.jar
+          echo "Artefacto JAR generado correctamente"
+          ls -lh target/sate-uniajc-1.0.0.jar
+
+      - name: Publicar artefacto para staging
+        uses: actions/upload-artifact@v4
+        with:
+          name: sate-uniajc-staging
+          path: target/sate-uniajc-1.0.0.jar
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Confirmar entrega continua
+        run: |
+          echo "Pruebas y empaquetado completados."
+          echo "El JAR esta disponible como artefacto de GitHub Actions."
+          echo "Despliegue real a staging: pendiente de configurar."
