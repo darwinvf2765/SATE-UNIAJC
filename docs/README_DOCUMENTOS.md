@@ -110,6 +110,7 @@ no la fuente oficial de seguimiento.
 | Documento o archivo | Descripción |
 |---|---|
 | [Plan de pruebas](PLAN_PRUEBAS.md) | Planificación y evidencias de pruebas |
+| [Evidencias de la Sesión 13](EVIDENCIAS_SESION_13.md) | Resultados finales de pruebas automatizadas y validación funcional |
 | [Workflow CI](../.github/workflows/ci.yml) | Integración continua y ejecución de pruebas |
 | [Workflow CD](../.github/workflows/cd.yml) | Empaquetado y publicación del artefacto JAR |
 
@@ -409,6 +410,12 @@ xychart-beta
 | Errores | 0 |
 | Pruebas omitidas | 0 |
 | Resultado de Maven | BUILD SUCCESS |
+| Fecha de ejecución final | 27 de noviembre de 2026 |
+| Hora de finalización | 16:58:41 (UTC-5) |
+| Tiempo total | 10.064 segundos |
+| Commit validado | f3c9db1 |
+| Clases de producción compiladas | 40 |
+| Clases de prueba compiladas | 6 |
 
 ### 11.4. Comando de verificación
 
@@ -418,12 +425,21 @@ Desde la raíz del proyecto:
 mvn clean test
 ```
 
-Los resultados corresponden a las ejecuciones
-locales reportadas durante el desarrollo.
+La ejecución final local fue realizada el
+27 de noviembre de 2026 sobre el commit f3c9db1.
 
-La ejecución final de la rama y la validación
-mediante GitHub Actions deben confirmarse antes
-de integrar los cambios a master.
+Las 37 pruebas automatizadas finalizaron correctamente,
+sin fallos, errores ni pruebas omitidas.
+
+También se realizó la validación funcional local
+de los componentes principales del sistema.
+
+Consultar el documento de
+[evidencias de la Sesión 13](EVIDENCIAS_SESION_13.md).
+
+La validación remota mediante GitHub Actions
+permanece pendiente antes de completar
+el proceso de integración a master.
 
 Las pruebas automatizadas no reemplazan la validación
 funcional de todos los criterios de aceptación.
@@ -530,6 +546,13 @@ https://github.com/darwinvf2765/SATE-UNIAJC/actions
 - Actualización del README principal.
 - Actualización de la documentación técnica.
 - Actualización del diagrama de arquitectura MVC.
+- Actualización de los diagramas de clases HU-04 y HU-05.
+- Actualización de los diagramas de secuencia.
+- Actualización del plan de pruebas.
+- Ampliación del análisis de deuda técnica.
+- Ejecución final de 37 pruebas automatizadas.
+- Validación funcional local del sistema.
+- [Documento de evidencias finales](EVIDENCIAS_SESION_13.md).
 
 La aceptación definitiva de los entregables depende
 de la revisión académica y de la validación final
@@ -554,12 +577,14 @@ del código integrado.
 - [x] Actualizar la documentación técnica.
 - [x] Actualizar el diagrama de arquitectura MVC.
 - [x] Actualizar el índice de documentación.
-- [ ] Revisar los diagramas de clases relacionados.
-- [ ] Revisar el diagrama de secuencia.
-- [ ] Actualizar el plan de pruebas.
+- [x] Actualizar los diagramas de clases relacionados.
+- [x] Actualizar el diagrama de secuencia.
+- [x] Actualizar el plan de pruebas.
 - [ ] Verificar la visualización de los diagramas.
-- [ ] Ejecutar la validación final con Maven.
-- [ ] Realizar la validación funcional correspondiente.
+- [x] Ejecutar la validación final con Maven.
+- [x] Realizar la validación funcional correspondiente.
+- [x] Ampliar el análisis de deuda técnica.
+- [x] Documentar las evidencias finales de la Sesión 13.
 - [ ] Publicar la rama Juan-sesion-13.
 - [ ] Crear y revisar el Pull Request.
 - [ ] Verificar los resultados de GitHub Actions.
