@@ -1,7 +1,7 @@
 package co.uniajc.sate.controller;
 
 import co.uniajc.sate.model.Alerta;
-import co.uniajc.sate.repository.AlertaRepository;
+import co.uniajc.sate.persistence.AlertaRepository;
 import co.uniajc.sate.service.AlertaService;
 import org.springframework.web.bind.annotation.*;
 

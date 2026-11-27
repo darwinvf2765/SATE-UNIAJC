@@ -1,9 +1,7 @@
-
 package co.uniajc.sate.controller;
 
 import co.uniajc.sate.model.Estudiante;
-import co.uniajc.sate.repository.EstudianteRepository;
-import co.uniajc.sate.service.AlertaService;
+import co.uniajc.sate.service.EstudianteService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -15,34 +13,26 @@ import java.util.List;
 @CrossOrigin
 public class EstudianteController {
 
-    private final EstudianteRepository repository;
-    private final AlertaService alertaService;
+    private final EstudianteService estudianteService;
 
-    public EstudianteController(
-            EstudianteRepository repository,
-            AlertaService alertaService) {
-        this.repository = repository;
-        this.alertaService = alertaService;
+    public EstudianteController(EstudianteService estudianteService) {
+        this.estudianteService = estudianteService;
     }
 
     @GetMapping
     public List<Estudiante> listar() {
-        return repository.findAll();
+        return estudianteService.listar();
     }
 
     @GetMapping("/{id}")
     public Estudiante buscar(@PathVariable Long id) {
-        return repository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Estudiante no encontrado"));
+        return estudianteService.buscar(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Estudiante crear(@Valid @RequestBody Estudiante estudiante) {
-        Estudiante guardado = repository.save(estudiante);
-        alertaService.evaluarEstudiante(guardado);
-        return guardado;
+        return estudianteService.crear(estudiante);
     }
 
     @PutMapping("/{id}/registro")
@@ -50,18 +40,10 @@ public class EstudianteController {
             @PathVariable Long id,
             @Valid @RequestBody RegistroRequest request) {
 
-        Estudiante estudiante = buscar(id);
-
-        estudiante.setPorcentajeInasistencia(
-                request.porcentajeInasistencia());
-
-        estudiante.setPromedio(request.promedio());
-
-        Estudiante guardado = repository.save(estudiante);
-
-        alertaService.evaluarEstudiante(guardado);
-
-        return repository.save(guardado);
+        return estudianteService.actualizarRegistro(
+                id,
+                request.porcentajeInasistencia(),
+                request.promedio());
     }
 
     public record RegistroRequest(

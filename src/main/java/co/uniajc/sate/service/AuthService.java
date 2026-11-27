@@ -1,7 +1,7 @@
 package co.uniajc.sate.service;
 
 import co.uniajc.sate.model.Usuario;
-import co.uniajc.sate.repository.UsuarioRepository;
+import co.uniajc.sate.persistence.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

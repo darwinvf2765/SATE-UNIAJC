@@ -1,5 +1,5 @@
 
-package co.uniajc.sate.repository;
+package co.uniajc.sate.persistence;
 
 import co.uniajc.sate.model.Asistencia;
 import co.uniajc.sate.model.Estudiante;

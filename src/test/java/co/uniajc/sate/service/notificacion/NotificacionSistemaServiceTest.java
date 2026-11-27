@@ -1,13 +1,15 @@
-
 package co.uniajc.sate.service.notificacion;
 
 import co.uniajc.sate.model.Alerta;
 import co.uniajc.sate.model.Estudiante;
-import co.uniajc.sate.repository.AlertaRepository;
+import co.uniajc.sate.persistence.AlertaRepository;
 import co.uniajc.sate.service.evaluacion.EvaluadorAlerta;
+import co.uniajc.sate.service.factory.AlertaFactory;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -19,13 +21,18 @@ class NotificacionSistemaServiceTest {
     @Mock
     private AlertaRepository alertaRepository;
 
+    @Mock
+    private AlertaFactory alertaFactory;
+
+    @InjectMocks
+    private NotificacionSistemaService servicio;
+
     @Test
     void debeGuardarNotificacionEnElSistema() {
 
         Estudiante estudiante = mock(Estudiante.class);
 
         when(estudiante.getId()).thenReturn(1L);
-        when(estudiante.getNombre()).thenReturn("Juan Prueba");
 
         EvaluadorAlerta.ResultadoEvaluacion resultado =
                 new EvaluadorAlerta.ResultadoEvaluacion(
@@ -33,16 +40,21 @@ class NotificacionSistemaServiceTest {
                         "Inasistencia superior al 15%"
                 );
 
-        when(alertaRepository.existsByEstudianteIdAndTipoAndAtendidaFalse(
-                1L, "ROJA"
-        )).thenReturn(false);
+        Alerta alerta = mock(Alerta.class);
 
-        NotificacionSistemaService servicio =
-                new NotificacionSistemaService(alertaRepository);
+        when(alertaRepository
+                .existsByEstudianteIdAndTipoAndAtendidaFalse(
+                        1L, "ROJA"
+                )).thenReturn(false);
+
+        when(alertaFactory.crearAlerta(estudiante, resultado))
+                .thenReturn(alerta);
 
         servicio.notificar(estudiante, resultado);
 
-        verify(alertaRepository).save(any(Alerta.class));
+        verify(alertaFactory).crearAlerta(estudiante, resultado);
+
+        verify(alertaRepository).save(alerta);
     }
 
     @Test
@@ -58,15 +70,16 @@ class NotificacionSistemaServiceTest {
                         "Inasistencia superior al 15%"
                 );
 
-        when(alertaRepository.existsByEstudianteIdAndTipoAndAtendidaFalse(
-                1L, "ROJA"
-        )).thenReturn(true);
-
-        NotificacionSistemaService servicio =
-                new NotificacionSistemaService(alertaRepository);
+        when(alertaRepository
+                .existsByEstudianteIdAndTipoAndAtendidaFalse(
+                        1L, "ROJA"
+                )).thenReturn(true);
 
         servicio.notificar(estudiante, resultado);
 
-        verify(alertaRepository, never()).save(any(Alerta.class));
+        verifyNoInteractions(alertaFactory);
+
+        verify(alertaRepository, never())
+                .save(any(Alerta.class));
     }
 }

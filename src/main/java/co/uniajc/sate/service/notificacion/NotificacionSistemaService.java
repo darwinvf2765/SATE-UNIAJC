@@ -1,22 +1,24 @@
-
-
 package co.uniajc.sate.service.notificacion;
 
 import co.uniajc.sate.model.Alerta;
 import co.uniajc.sate.model.Estudiante;
-import co.uniajc.sate.repository.AlertaRepository;
+import co.uniajc.sate.persistence.AlertaRepository;
 import co.uniajc.sate.service.evaluacion.EvaluadorAlerta;
+import co.uniajc.sate.service.factory.AlertaFactory;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Service
 public class NotificacionSistemaService implements NotificacionService {
 
     private final AlertaRepository alertaRepository;
+    private final AlertaFactory alertaFactory;
 
-    public NotificacionSistemaService(AlertaRepository alertaRepository) {
+    public NotificacionSistemaService(
+            AlertaRepository alertaRepository,
+            AlertaFactory alertaFactory
+    ) {
         this.alertaRepository = alertaRepository;
+        this.alertaFactory = alertaFactory;
     }
 
     @Override
@@ -35,16 +37,11 @@ public class NotificacionSistemaService implements NotificacionService {
             return;
         }
 
-        Alerta alerta = new Alerta(
-                estudiante.getId(),
-                estudiante.getNombre(),
-                resultado.tipo(),
-                resultado.motivo(),
-                LocalDateTime.now(),
-                false
+        Alerta alerta = alertaFactory.crearAlerta(
+                estudiante,
+                resultado
         );
 
         alertaRepository.save(alerta);
     }
 }
-
