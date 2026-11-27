@@ -1,8 +1,8 @@
 package co.uniajc.sate.controller;
 
 import co.uniajc.sate.model.Tutoria;
-import co.uniajc.sate.repository.EstudianteRepository;
-import co.uniajc.sate.repository.TutoriaRepository;
+import co.uniajc.sate.persistence.EstudianteRepository;
+import co.uniajc.sate.persistence.TutoriaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

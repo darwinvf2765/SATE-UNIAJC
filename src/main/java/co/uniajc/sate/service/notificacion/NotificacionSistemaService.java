@@ -4,7 +4,7 @@ package co.uniajc.sate.service.notificacion;
 
 import co.uniajc.sate.model.Alerta;
 import co.uniajc.sate.model.Estudiante;
-import co.uniajc.sate.repository.AlertaRepository;
+import co.uniajc.sate.persistence.AlertaRepository;
 import co.uniajc.sate.service.evaluacion.EvaluadorAlerta;
 import org.springframework.stereotype.Service;
 

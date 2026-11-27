@@ -3,8 +3,8 @@ package co.uniajc.sate.service;
 
 import co.uniajc.sate.model.Alerta;
 import co.uniajc.sate.model.Estudiante;
-import co.uniajc.sate.repository.AlertaRepository;
-import co.uniajc.sate.repository.EstudianteRepository;
+import co.uniajc.sate.persistence.AlertaRepository;
+import co.uniajc.sate.persistence.EstudianteRepository;
 import co.uniajc.sate.service.evaluacion.EvaluadorAlerta;
 import co.uniajc.sate.service.notificacion.NotificacionService;
 import org.springframework.stereotype.Service;

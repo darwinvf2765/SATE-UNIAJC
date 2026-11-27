@@ -3,8 +3,8 @@ package co.uniajc.sate.controller;
 import co.uniajc.sate.model.Asistencia;
 import co.uniajc.sate.model.Estudiante;
 import co.uniajc.sate.model.Materia;
-import co.uniajc.sate.repository.EstudianteRepository;
-import co.uniajc.sate.repository.MateriaRepository;
+import co.uniajc.sate.persistence.EstudianteRepository;
+import co.uniajc.sate.persistence.MateriaRepository;
 import co.uniajc.sate.service.AsistenciaService;
 import org.springframework.web.bind.annotation.*;
 

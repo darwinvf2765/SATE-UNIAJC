@@ -2,7 +2,7 @@
 package co.uniajc.sate.controller;
 
 import co.uniajc.sate.model.Estudiante;
-import co.uniajc.sate.repository.EstudianteRepository;
+import co.uniajc.sate.persistence.EstudianteRepository;
 import co.uniajc.sate.service.AlertaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

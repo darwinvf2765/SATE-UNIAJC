@@ -2,8 +2,8 @@ package co.uniajc.sate.config;
 
 import co.uniajc.sate.model.Rol;
 import co.uniajc.sate.model.Usuario;
-import co.uniajc.sate.repository.RolRepository;
-import co.uniajc.sate.repository.UsuarioRepository;
+import co.uniajc.sate.persistence.RolRepository;
+import co.uniajc.sate.persistence.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
